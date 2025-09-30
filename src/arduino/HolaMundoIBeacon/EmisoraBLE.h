@@ -54,10 +54,10 @@ public:
 
   // .........................................................
   // .........................................................
-  /* creo que no me sirve esta versión porque parece
+  /* creo que no msión porque parece
 	 que no se instalen los callbacks si la emisora no está encendida,
 	 pero no la puedo encender en el constructor 
-  EmisoraBLE( const char * nombreEmisora_, const uint16_t fabricanteID_,
+  EmisoraBLE( const che sirve esta verar * nombreEmisora_, const uint16_t fabricanteID_,
 			  const int8_t txPower_,
 			  CallbackConexionEstablecida cbce,
 			  CallbackConexionTerminada cbct
@@ -122,6 +122,10 @@ public:
 	//
 	// creo el beacon 
 	//
+
+	Bluefruit.Advertising.clearData();
+	Bluefruit.ScanResponse.clearData(); // hace falta?
+
 	BLEBeacon elBeacon( beaconUUID, major, minor, rssi );
 	elBeacon.setManufacturer( (*this).fabricanteID );
 
@@ -137,6 +141,7 @@ public:
 	// pongo el beacon
 	//
 	Bluefruit.Advertising.setBeacon( elBeacon );
+
 
 	//
 	// ? qué valorers poner aquí

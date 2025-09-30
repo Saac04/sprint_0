@@ -15,9 +15,11 @@ class Publicador {
   // ............................................................
 private:
 
-  uint8_t beaconUUID[16] = { 
-	'E', 'P', 'S', 'G', '-', 'G', 'T', 'I', 
-	'-', 'P', 'R', 'O', 'Y', '-', '3', 'A'
+	uint8_t beaconUUID[16] = {
+    0x45, 0x50, 0x53, 0x47,
+    0x2D, 0x47, 0x54, 0x49,
+    0x2D, 0x50, 0x52, 0x4F,
+    0x59, 0x2D, 0x33, 0x41
 	};
 
   // ............................................................
@@ -71,7 +73,7 @@ public:
 											(*this).RSSI // rssi
 									);
 
-	/*
+	
 	Globales::elPuerto.escribir( "   publicarCO2(): valor=" );
 	Globales::elPuerto.escribir( valorCO2 );
 	Globales::elPuerto.escribir( "   contador=" );
@@ -79,7 +81,7 @@ public:
 	Globales::elPuerto.escribir( "   todo="  );
 	Globales::elPuerto.escribir( major );
 	Globales::elPuerto.escribir( "\n" );
-	*/
+	
 
 	//
 	// 2. esperamos el tiempo que nos digan
