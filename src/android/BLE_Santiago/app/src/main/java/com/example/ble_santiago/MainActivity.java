@@ -115,19 +115,22 @@ public class MainActivity extends AppCompatActivity {
                 + tib.getiBeaconLength() + " ) ");
         Log.d(ETIQUETA_LOG, " uuid  = " + Utilidades.bytesToHexString(tib.getUUID()));
         Log.d(ETIQUETA_LOG, " uuid  = " + Utilidades.bytesToString(tib.getUUID()));
-        Log.d(ETIQUETA_LOG, " major  = " + Utilidades.bytesToHexString(tib.getMajor()) + "( "
-                + Utilidades.bytesToInt(tib.getMajor()) + " ) ");
 
-        int tipoMedicion = (Utilidades.bytesToInt(tib.getMajor()) >> 8) & 0xFF;
+        byte[] major = tib.getMajor();
+        Log.d(ETIQUETA_LOG, " major  = " + Utilidades.bytesToHexString(major) + "( "
+                + Utilidades.bytesToInt(major) + " ) ");
+
+
+        int tipoMedicion = major[0] & 0xFF ;
         Log.d(ETIQUETA_LOG, " tipo medicion  = " + tipoMedicion);
 
-        int contador = Utilidades.bytesToInt(tib.getMajor()) & 0xFF;
+        int contador = major[1] & 0xFF;
         Log.d(ETIQUETA_LOG, " contador  = " + contador);
 
         Log.d(ETIQUETA_LOG, " minor  = " + Utilidades.bytesToHexString(tib.getMinor()) + "( "
                 + Utilidades.bytesToInt(tib.getMinor()) + " ) ");
 
-        int medicion = (Utilidades.bytesToInt(tib.getMinor()) >> 8) & 0xFF;
+        int medicion = (Utilidades.bytesToInt(tib.getMinor()) ) & 0xFF;
         Log.d(ETIQUETA_LOG, " medicion  = " + medicion);
 
         Log.d(ETIQUETA_LOG, " txPower  = " + Integer.toHexString(tib.getTxPower()) + " ( " + tib.getTxPower() + " )");
@@ -216,7 +219,7 @@ public class MainActivity extends AppCompatActivity {
 
         //this.buscarEsteDispositivoBTLE( "EPSG-GTI-PROY-3A" );
         //this.buscarEsteDispositivoBTLE( "EPSG-GTI-PROY-3A" );
-        this.buscarEsteDispositivoBTLE( "1234");
+        this.buscarEsteDispositivoBTLE( "GTI");
 
     } // ()
 
@@ -231,7 +234,7 @@ public class MainActivity extends AppCompatActivity {
     // --------------------------------------------------------------
     private void inicializarBlueTooth() {
         Log.d(ETIQUETA_LOG, " inicializarBlueTooth(): obtenemos adaptador BT ");
-        
+
         BluetoothAdapter bta = BluetoothAdapter.getDefaultAdapter();
 
         Log.d(ETIQUETA_LOG, " inicializarBlueTooth(): habilitamos adaptador BT ");
