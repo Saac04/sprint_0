@@ -18,17 +18,18 @@ const logicaNegocio = new LogicaDeNegocio();
 // MIDDLEWARE
 // ================================
 
-// CORS - Permitir peticiones desde otros dominios
+// debido a que el front y el backend estan / estaran en dominios diferentes
+// se usa CORS para permitir esas conexiones
 app.use(cors({
     origin: process.env.FRONTEND_URL || '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true
 }));
 
-// Parser de JSON para recibir datos en el body
+// se hace parse de JSON para recibir datos en el body
 app.use(express.json({ limit: '5mb' }));
 
-// Parser para URL encoded data
+// y tambien en la URL encoded data
 app.use(express.urlencoded({ extended: true }));
 
 // Middleware para logging de requests
@@ -42,7 +43,8 @@ app.use((req, res, next) => {
 // RUTAS DE LA API REST
 // ================================
 
-// Ruta de salud del servidor
+// Con este endpoint se puede verificar que el servidor está corriendo
+// y obtener un mensaje simple de estado, no se si cuenta como Test automatico, pero sirve para monitoreo
 app.get('/api/health', (req, res) => {
     res.status(200).json({
         success: true,
@@ -75,12 +77,12 @@ app.post('/api/mediciones', async (req, res) => {
         const datosMedicion = req.body;
         
         // Log para debugging
-        console.log('📥 Datos recibidos del Android:', JSON.stringify(datosMedicion));
+        console.log('Datos recibidos del Android:', JSON.stringify(datosMedicion));
 		
 
         // Validación básica de campos requeridos
         if (!datosMedicion.tipo) {
-			console.log( 'El campo "tipo" es requerido')
+			//console.log( 'El campo "tipo" es requerido')
             return res.status(400).json({
                 success: false,
                 error: 'El campo "tipo" es requerido'
@@ -95,7 +97,7 @@ app.post('/api/mediciones', async (req, res) => {
             });
         }
 
-        // Validar que tipo sea "temperatura" o "gas"
+        // Validar que tipo sea "temperatura" o "gas", porque la logica de negocio solo acepta esos dos tipos
         const tiposValidos = ['temperatura', 'gas'];
         if (!tiposValidos.includes(datosMedicion.tipo.toLowerCase())) {
 			console.log( `El tipo debe ser "temperatura" o "gas". Recibido: "${datosMedicion.tipo}"`)
@@ -105,11 +107,10 @@ app.post('/api/mediciones', async (req, res) => {
             });
         }
 
-        // Llamar a la lógica de negocio para guardar la medición
         const resultado = await logicaNegocio.guardarMedicion(datosMedicion);
 		
 
-        // Respuesta exitosa
+        // Si todo va bien responder con éxito
         res.status(201).json({
             success: true,
             message: 'Medición guardada exitosamente',
@@ -123,7 +124,7 @@ app.post('/api/mediciones', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('❌ Error en POST /api/mediciones:', error);		
+        console.error('Error en POST /api/mediciones:', error);		
         
         // Manejar diferentes tipos de errores
         if (error.message.includes('tipo') || 
@@ -161,10 +162,10 @@ app.post('/api/mediciones', async (req, res) => {
 // ================================
 app.get('/api/mediciones', async (req, res) => {
     try {
-        console.log('🔍 Obteniendo última medición');
+        console.log('Obteniendo última medición');
 
         // Llamar a la lógica de negocio para obtener la última medición
-        const ultimaMedicion = await logicaNegocio.getMedicionesRecientes(1);
+        const ultimaMedicion = await logicaNegocio.getMedicion();
 
         // Verificar si hay mediciones
         if (!ultimaMedicion || ultimaMedicion.length === 0) {
@@ -181,62 +182,7 @@ app.get('/api/mediciones', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('❌ Error en GET /api/mediciones:', error);
-        
-        if (error.message.includes('base de datos') || 
-            error.message.includes('conexión') ||
-            error.code === 'ECONNREFUSED') {
-            return res.status(503).json({
-                success: false,
-                error: 'Error de conexión con la base de datos'
-            });
-        }
-
-        res.status(500).json({
-            success: false,
-            error: 'Error interno del servidor',
-            detalle: process.env.NODE_ENV === 'development' ? error.message : undefined
-        });
-    }
-});
-
-// ================================
-// GET /api/mediciones/recientes
-// Obtener últimas mediciones para tiempo real
-// Query params: ?limite=50 (opcional)
-// ================================
-app.get('/api/mediciones/recientes', async (req, res) => {
-    try {
-        // Parámetro de límite opcional (default: 50)
-        let limite = 50;
-        
-        if (req.query.limite) {
-            limite = parseInt(req.query.limite);
-            
-            // Validar que el límite sea razonable
-            if (isNaN(limite) || limite < 1 || limite > 1000) {
-                return res.status(400).json({
-                    success: false,
-                    error: 'El parámetro "limite" debe ser un número entre 1 y 1000'
-                });
-            }
-        }
-
-        console.log(`📊 Obteniendo ${limite} mediciones recientes`);
-
-        // Llamar a la lógica de negocio
-        const medicionesRecientes = await logicaNegocio.getMedicionesRecientes(limite);
-
-        // Respuesta exitosa
-        res.status(200).json({
-            success: true,
-            data: medicionesRecientes,
-            total: medicionesRecientes.length,
-            limite_aplicado: limite
-        });
-
-    } catch (error) {
-        console.error('❌ Error en GET /api/mediciones/recientes:', error);
+        console.error('Error en GET /api/mediciones:', error);
         
         if (error.message.includes('base de datos') || 
             error.message.includes('conexión') ||
@@ -266,7 +212,6 @@ app.use('*', (req, res) => {
             'GET  /api/health',
             'POST /api/mediciones (body: {tipo: "temperatura|gas", valor: number})', 
             'GET  /api/mediciones (retorna la última medición)',
-            'GET  /api/mediciones/recientes (params: ?limite=50)'
         ]
     });
 });
@@ -275,7 +220,7 @@ app.use('*', (req, res) => {
 // MIDDLEWARE DE MANEJO DE ERRORES GLOBAL
 // ================================
 app.use((err, req, res, next) => {
-    console.error('💥 Error no manejado:', err);
+    console.error('Error no manejado:', err);
     
     res.status(500).json({
         success: false,
@@ -289,39 +234,39 @@ app.use((err, req, res, next) => {
 // INICIALIZACIÓN DEL SERVIDOR
 // ================================
 
-// Función para inicializar el servidor
+//Originalmente la inicialización del servidor era mas sencilla, pero despues de varios errores iniciales
+//lo pasé por chatGPT, logró arrelgar el error, y ademas dejo los console.log y me gústo como quedó asi que lo dejo asi
+
 async function iniciarServidor() {
     try {
         // Verificar conexión a base de datos antes de iniciar
-        console.log('🔄 Verificando conexión a base de datos...');
+        console.log('Verificando conexión a base de datos...');
         await logicaNegocio.verificarConexion();
-        console.log('✅ Conexión a base de datos exitosa');
+        console.log('Conexión a base de datos exitosa');
         
         // Iniciar servidor
         app.listen(PORT, () => {
-            console.log(`\n🚀 ============================================`);
+            console.log(`\n ============================================`);
             console.log(`   Servidor IoT iniciado exitosamente`);
             console.log(`============================================`);
-            console.log(`📡 Puerto: ${PORT}`);
-            console.log(`🌐 URL Local: http://localhost:${PORT}`);
-            console.log(`📋 Health Check: http://localhost:${PORT}/api/health`);
-            console.log(`\n📊 Endpoints Disponibles:`);
+            console.log(` Puerto: ${PORT}`);
+            console.log(` URL Local: http://localhost:${PORT}`);
+            console.log(` Health Check: http://localhost:${PORT}/api/health`);
+            console.log(`\n Endpoints Disponibles:`);
             console.log(`   POST /api/mediciones`);
             console.log(`        Body: {tipo: "temperatura|gas", valor: number}`);
             console.log(`   GET  /api/mediciones`);
             console.log(`        Retorna la última medición registrada`);
-            console.log(`   GET  /api/mediciones/recientes`);
-            console.log(`        Params: ?limite=50`);
             console.log(`============================================`);
-            console.log(`⏰ Servidor listo para recibir peticiones...\n`);
+            console.log(` Servidor listo para recibir peticiones...\n`);
         });
         
     } catch (error) {
-        console.error('\n❌ ============================================');
+        console.error('\n ============================================');
         console.error('   Error al iniciar servidor');
         console.error('============================================');
         console.error('Error:', error.message);
-        console.error('\n💡 Posibles soluciones:');
+        console.error('\n Posibles soluciones:');
         console.error('   1. Verifique la configuración en el archivo .env');
         console.error('   2. Asegúrese que MySQL esté ejecutándose');
         console.error('   3. Verifique las credenciales de base de datos');
@@ -333,12 +278,12 @@ async function iniciarServidor() {
 
 // Manejar cierre graceful del servidor
 process.on('SIGTERM', () => {
-    console.log('\n🔄 Cerrando servidor graciosamente...');
+    console.log('\n Cerrando servidor graciosamente...');
     process.exit(0);
 });
 
 process.on('SIGINT', () => {
-    console.log('\n🔄 Servidor interrumpido por usuario...');
+    console.log('\n Servidor interrumpido por usuario...');
     process.exit(0);
 });
 

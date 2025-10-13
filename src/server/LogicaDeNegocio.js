@@ -13,7 +13,7 @@ class LogicaDeNegocio {
     // ================================
     async guardarMedicion(datos) {
         try {
-            console.log('🔄 Iniciando guardado de medición:', datos);
+            console.log('Iniciando guardado de medición:', datos);
 
             // Validar estructura básica de datos
             this.validarDatosEntrada(datos);
@@ -39,7 +39,7 @@ class LogicaDeNegocio {
                 ]
             );
 
-            console.log('✅ Medición guardada exitosamente - ID:', resultado.insertId);
+            console.log('Medición guardada exitosamente - ID:', resultado.insertId);
 
             // Retornar confirmación
             return {
@@ -51,68 +51,38 @@ class LogicaDeNegocio {
             };
 
         } catch (error) {
-            console.error('❌ Error en guardarMedicion:', error);
+            console.error('Error en guardarMedicion:', error);
             throw error;
         }
     }
 
     // ================================
     // MÉTODO 2: getMediciones
-    // Obtiene mediciones con filtros opcionales
+    // Obtiene la ultima medicion
     // ================================
-    async getMediciones(filtros = {}) {
+    async getMedicion() {
         try {
-            console.log('🔍 Consultando mediciones con filtros:', filtros);
-
-            // Construir query SQL dinámico
-            const { query, params } = this.construirQueryConFiltros(filtros);
+            console.log('Consultando ultima medcion');
 
             // Ejecutar consulta
             const mediciones = await this.database.ejecutarQuery(query, params);
-
-            console.log(`✅ Encontradas ${mediciones.length} mediciones`);
-
-            // Formatear respuesta
-            return mediciones.map(medicion => this.formatearMedicion(medicion));
-
-        } catch (error) {
-            console.error('❌ Error en getMediciones:', error);
-            throw new Error('Error al consultar mediciones: ' + error.message);
-        }
-    }
-
-    // ================================
-    // MÉTODO 3: getMedicionesRecientes
-    // Obtiene las últimas N mediciones para tiempo real
-    // ================================
-    async getMedicionesRecientes(limite = 50) {
-        try {
-            console.log(`📊 Consultando ${limite} mediciones más recientes`);
-
-            // Validar límite
-            if (!Number.isInteger(limite) || limite < 1 || limite > 1000) {
-                throw new Error('El límite debe ser un número entero entre 1 y 1000');
-            }
 
             // Query optimizada para mediciones recientes
             const query = `
                 SELECT id, dispositivo_id, tipo, valor, fecha 
                 FROM mediciones 
                 ORDER BY fecha DESC 
-                LIMIT ?
+                LIMIT 1
             `;
 
-            // Ejecutar consulta
-            const medicionesRecientes = await this.database.ejecutarQuery(query, [limite]);
+            const medicion = await this.database.ejecutarQuery(query);
 
-            console.log(`✅ Obtenidas ${medicionesRecientes.length} mediciones recientes`);
-
-            // Formatear y retornar
-            return medicionesRecientes.map(medicion => this.formatearMedicion(medicion));
+            // Formatear respuesta
+            return medicion.map(medicionFormateada => this.formatearMedicion(medicionFormateada));
 
         } catch (error) {
-            console.error('❌ Error en getMedicionesRecientes:', error);
-            throw new Error('Error al consultar mediciones recientes: ' + error.message);
+            console.error(' Error en getMedicion:', error);
+            throw new Error('Error al consultar medicion: ' + error.message);
         }
     }
 
@@ -251,62 +221,6 @@ class LogicaDeNegocio {
         }
     }
 
-    // ================================
-    // MÉTODOS DE ESTADÍSTICAS BÁSICAS (BONUS)
-    // ================================
-
-    async obtenerEstadisticas() {
-        try {
-            const stats = await this.database.ejecutarQuery(`
-                SELECT 
-                    COUNT(*) as total_mediciones,
-                    COUNT(DISTINCT dispositivo_id) as total_dispositivos,
-                    AVG(CASE WHEN tipo = 'temperatura' THEN valor END) as temp_promedio,
-                    AVG(CASE WHEN tipo = 'gas' THEN valor END) as gas_promedio,
-                    MAX(fecha) as ultima_medicion
-                FROM mediciones
-            `);
-
-            return {
-                total_mediciones: stats[0].total_mediciones,
-                total_dispositivos: stats[0].total_dispositivos,
-                temperatura_promedio: stats[0].temp_promedio ? parseFloat(stats[0].temp_promedio.toFixed(2)) : null,
-                gas_promedio: stats[0].gas_promedio ? parseFloat(stats[0].gas_promedio.toFixed(2)) : null,
-                ultima_medicion: stats[0].ultima_medicion
-            };
-
-        } catch (error) {
-            console.error('❌ Error al obtener estadísticas:', error);
-            throw new Error('Error al calcular estadísticas: ' + error.message);
-        }
-    }
-
-    // ================================
-    // MÉTODO PARA LIMPIAR DATOS ANTIGUOS (MANTENIMIENTO)
-    // ================================
-
-    async limpiarDatosAntiguos(diasAntiguedad = 30) {
-        try {
-            const fechaLimite = new Date();
-            fechaLimite.setDate(fechaLimite.getDate() - diasAntiguedad);
-
-            const resultado = await this.database.ejecutarQuery(
-                'DELETE FROM mediciones WHERE fecha < ?',
-                [fechaLimite.toISOString()]
-            );
-
-            console.log(`🧹 Eliminadas ${resultado.affectedRows} mediciones anteriores a ${diasAntiguedad} días`);
-            
-            return {
-                eliminadas: resultado.affectedRows,
-                fecha_limite: fechaLimite.toISOString()
-            };
-
-        } catch (error) {
-            console.error('❌ Error al limpiar datos antiguos:', error);
-            throw new Error('Error en limpieza de datos: ' + error.message);
-        }
-    }
 }
 
 module.exports = { LogicaDeNegocio };

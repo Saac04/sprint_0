@@ -31,7 +31,7 @@ class Database {
     }
 
     /**
-     * Ejecuta un query genérico
+     * Ejecuta un query SQL con parámetros
      * @param {string} sql - Query con placeholders
      * @param {Array} params - Valores para reemplazar en el query
      * @returns {Promise<Array|Object>} - Resultados del query
