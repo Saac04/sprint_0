@@ -107,6 +107,14 @@ public:
 									);
 	esperar( tiempoEspera );
 
+	Globales::elPuerto.escribir( "   publicarTemperatura(): valor=" );
+	Globales::elPuerto.escribir( valorTemperatura );
+	Globales::elPuerto.escribir( "   contador=" );
+	Globales::elPuerto.escribir( contador );
+	Globales::elPuerto.escribir( "   todo="  );
+	Globales::elPuerto.escribir( major );
+	Globales::elPuerto.escribir( "\n" );
+
 	(*this).laEmisora.detenerAnuncio();
   } // ()
 	

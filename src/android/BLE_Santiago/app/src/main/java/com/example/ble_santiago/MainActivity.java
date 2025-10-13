@@ -9,6 +9,7 @@ import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.ParcelUuid;
@@ -38,6 +39,9 @@ public class MainActivity extends AppCompatActivity {
     private BluetoothLeScanner elEscanner;
 
     private ScanCallback callbackDelEscaneo = null;
+
+    private int contadorAndroid = 0;
+    private int numeroDeTipoMedidaAndroid = 0;
 
     // --------------------------------------------------------------
     // --------------------------------------------------------------
@@ -130,8 +134,7 @@ public class MainActivity extends AppCompatActivity {
         Log.d(ETIQUETA_LOG, " minor  = " + Utilidades.bytesToHexString(tib.getMinor()) + "( "
                 + Utilidades.bytesToInt(tib.getMinor()) + " ) ");
 
-        int medicion = (Utilidades.bytesToInt(tib.getMinor()) ) & 0xFF;
-        Log.d(ETIQUETA_LOG, " medicion  = " + medicion);
+        Log.d(ETIQUETA_LOG, " medicion  = " + Utilidades.bytesToInt(tib.getMinor()));
 
         Log.d(ETIQUETA_LOG, " txPower  = " + Integer.toHexString(tib.getTxPower()) + " ( " + tib.getTxPower() + " )");
         Log.d(ETIQUETA_LOG, " ****************************************************");
@@ -155,6 +158,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(ETIQUETA_LOG, "  buscarEsteDispositivoBTLE(): onScanResult() ");
 
                 mostrarInformacionDispositivoBTLE( resultado );
+                guardarMedicion( resultado );
             }
 
             @Override
@@ -178,7 +182,7 @@ public class MainActivity extends AppCompatActivity {
         List<ScanFilter> filtros = new java.util.ArrayList<>();
         filtros.add(sf);
 
-        // 4. Configuración de escaneo (modo rápido, baja latencia)
+        // Configuración de escaneo (modo rápido, baja latencia)
         android.bluetooth.le.ScanSettings settings =
                 new android.bluetooth.le.ScanSettings.Builder()
                         .setScanMode(android.bluetooth.le.ScanSettings.SCAN_MODE_LOW_LATENCY)
@@ -203,6 +207,52 @@ public class MainActivity extends AppCompatActivity {
         this.callbackDelEscaneo = null;
 
     } // ()
+
+
+    private void guardarMedicion( ScanResult resultado){
+
+        byte[] bytes = resultado.getScanRecord().getBytes();
+        TramaIBeacon tib = new TramaIBeacon(bytes);
+
+        //esta es la mejor amnera que logré separar el el tipo de medicion con el contador.
+        byte[] major = tib.getMajor();
+        int tipoMedicion = major[0] & 0xFF ;
+        int contadorArduino = major[1] & 0xFF;
+
+        int valorMedicion = Utilidades.bytesToInt(tib.getMinor());
+
+        //tiene que ser dos porque se esperan 2 tipos de medida que son gas y temperatura
+        //tambien puedo crear una variable para este numero en especifico, pero se queda asi por ser el sprint 0
+
+        if ( this.numeroDeTipoMedidaAndroid == 2 ) {
+            Log.d(ETIQUETA_LOG, "Se enviaron todas las medidas");
+            return;
+        } else if ( contadorArduino == this.contadorAndroid ) {
+            Log.d(ETIQUETA_LOG, "Se repitio el contador no se envia este becon");
+            return;
+        } else {
+
+            /*  En el momemento que el contador sea diferente, es decir, un nuevo beacon con datos diferente
+                resetamos el numero de tipo de medicion a 0 para los casos de que:
+
+                (1) En caso de que sea una nueva medicion
+                (2) En caso de que no se obtenga alguna medicion, o solo se obtenga una
+
+                 Asi me aseguro de que no ocurra ningun fallo*/
+
+            this.numeroDeTipoMedidaAndroid = 0;
+        }
+
+        this.contadorAndroid = contadorArduino;
+        this.numeroDeTipoMedidaAndroid = this.numeroDeTipoMedidaAndroid + 1;
+
+        Log.d("CACA", "SE ENVIA EXISTOSAMENTE LA TRAMA DE: " + tipoMedicion);
+        Log.d("CACA", "CON CONTADOR: " + contadorArduino);
+
+        Logica logica = new Logica(tipoMedicion, valorMedicion);
+
+        logica.guardarMedcion();
+    }
 
     // --------------------------------------------------------------
     // --------------------------------------------------------------
@@ -239,7 +289,14 @@ public class MainActivity extends AppCompatActivity {
 
         Log.d(ETIQUETA_LOG, " inicializarBlueTooth(): habilitamos adaptador BT ");
 
-        bta.enable();
+        if (!bta.isEnabled()) {
+            Log.d(ETIQUETA_LOG, " inicializarBlueTooth(): Bluetooth desactivado, solicitando activación...");
+
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableBtIntent, CODIGO_PETICION_PERMISOS);
+        } else {
+            Log.d(ETIQUETA_LOG, " inicializarBlueTooth(): Bluetooth ya está activado");
+        }
 
         Log.d(ETIQUETA_LOG, " inicializarBlueTooth(): habilitado =  " + bta.isEnabled() );
 
