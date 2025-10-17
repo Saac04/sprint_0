@@ -64,9 +64,6 @@ class LogicaDeNegocio {
         try {
             console.log('Consultando ultima medcion');
 
-            // Ejecutar consulta
-            const mediciones = await this.database.ejecutarQuery(query, params);
-
             // Query optimizada para mediciones recientes
             const query = `
                 SELECT id, dispositivo_id, tipo, valor, fecha 
@@ -75,10 +72,15 @@ class LogicaDeNegocio {
                 LIMIT 1
             `;
 
-            const medicion = await this.database.ejecutarQuery(query);
+            const mediciones = await this.database.ejecutarQuery(query);
 
-            // Formatear respuesta
-            return medicion.map(medicionFormateada => this.formatearMedicion(medicionFormateada));
+            // Si no hay mediciones, retornar null
+            if (!mediciones || mediciones.length === 0) {
+                return null;
+            }
+
+            // Retornar SOLO la primera medición formateada (no un array)
+            return this.formatearMedicion(mediciones[0]);
 
         } catch (error) {
             console.error(' Error en getMedicion:', error);
@@ -207,16 +209,16 @@ class LogicaDeNegocio {
 
     async verificarConexion() {
         try {
-            console.log('🔄 Verificando conexión a base de datos...');
+            console.log(' Verificando conexión a base de datos...');
             
             // Test simple de conexión
             await this.database.ejecutarQuery('SELECT 1 as test');
             
-            console.log('✅ Conexión a base de datos verificada exitosamente');
+            console.log(' Conexión a base de datos verificada exitosamente');
             return true;
             
         } catch (error) {
-            console.error('❌ Error de conexión a base de datos:', error);
+            console.error(' Error de conexión a base de datos:', error);
             throw new Error('No se puede conectar a la base de datos: ' + error.message);
         }
     }

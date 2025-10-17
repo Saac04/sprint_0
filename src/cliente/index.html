@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biometría IoT - Mediciones en Tiempo Real</title>
+	<link rel="stylesheet" href="estilo.css">
+
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Sistema de Mediciones Biometricas</h1>
+        </header>
+
+        <main>
+            <!-- Estado de conexión -->
+            <div id="estado-conexion" class="estado">
+                <span id="estado-texto">Conectando...</span>
+            </div>
+
+            <!-- Última medición -->
+            <section class="medicion-actual">
+                <h2>Última Medición</h2>
+                
+                <div id="medicion-container">
+                    <div class="medicion-info">
+                        <div class="campo">
+                            <span class="label">Tipo:</span>
+                            <span id="tipo-valor" class="valor">--</span>
+                        </div>
+                        
+                        <div class="campo">
+                            <span class="label">Valor:</span>
+                            <span id="medicion-valor" class="valor-grande">--</span>
+                        </div>
+                        
+                        <div class="campo">
+                            <span class="label">Fecha y Hora:</span>
+                            <span id="timestamp-valor" class="valor">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mensaje cuando no hay datos -->
+                <div id="sin-datos" class="sin-datos" style="display: none;">
+                    <p>No hay mediciones disponibles</p>
+                </div>
+
+                <!-- Mensaje de error -->
+                <div id="error-mensaje" class="error-mensaje" style="display: none;">
+                    <p id="error-texto">Error al cargar datos</p>
+                </div>
+            </section>
+
+            <!-- Botón de actualización manual -->
+            <div class="controles">
+                <button id="btn-actualizar" class="btn-actualizar">
+                    Actualizar Ahora
+                </button>
+                
+                <div class="info-actualizacion">
+                    <p>Actualización automática cada 20 segundos</p>
+                    <p id="ultima-actualizacion">Última actualización: --</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="PeticionarioREST.js"></script>
+    <script src="LogicaDeNegocio.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

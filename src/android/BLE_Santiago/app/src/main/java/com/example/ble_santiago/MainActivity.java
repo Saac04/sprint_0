@@ -197,6 +197,63 @@ public class MainActivity extends AppCompatActivity {
 
     // --------------------------------------------------------------
     // --------------------------------------------------------------
+
+    // --------------------------------------------------------------
+    // --------------------------------------------------------------
+    private void buscarEsteDispositivoUuid(final String dispositivoBuscado) {
+        Log.d(ETIQUETA_LOG, " buscarEsteDispositivoUuid(): empieza ");
+
+        Log.d(ETIQUETA_LOG, "  buscarEsteDispositivoUuid(): instalamos scan callback ");
+
+
+        // super.onScanResult(ScanSettings.SCAN_MODE_LOW_LATENCY, result); para ahorro de energía
+
+        this.callbackDelEscaneo = new ScanCallback() {
+            @Override
+            public void onScanResult( int callbackType, ScanResult resultado ) {
+                super.onScanResult(callbackType, resultado);
+                Log.d(ETIQUETA_LOG, "  buscarEsteDispositivoUuid(): onScanResult() ");
+
+                mostrarInformacionDispositivoBTLE( resultado );
+                guardarMedicion( resultado );
+            }
+
+            @Override
+            public void onBatchScanResults(List<ScanResult> results) {
+                super.onBatchScanResults(results);
+                Log.d(ETIQUETA_LOG, "  buscarEsteDispositivoUuid(): onBatchScanResults() ");
+
+            }
+
+            @Override
+            public void onScanFailed(int errorCode) {
+                super.onScanFailed(errorCode);
+                Log.d(ETIQUETA_LOG, "  buscarEsteDispositivoUuid(): onScanFailed() ");
+
+            }
+        };
+
+        ScanFilter sf = new ScanFilter.Builder().setServiceUuid(new ParcelUuid(Utilidades.stringToUUID(dispositivoBuscado))).build();
+
+        List<ScanFilter> filtros = new java.util.ArrayList<>();
+        filtros.add(sf);
+
+        // Configuración de escaneo (modo rápido, baja latencia)
+        android.bluetooth.le.ScanSettings settings =
+                new android.bluetooth.le.ScanSettings.Builder()
+                        .setScanMode(android.bluetooth.le.ScanSettings.SCAN_MODE_LOW_LATENCY)
+                        .build();
+
+
+        Log.d(ETIQUETA_LOG, "  buscarEsteDispositivoUuid(): empezamos a escanear buscando: " + dispositivoBuscado );
+        // Log.d(ETIQUETA_LOG, "  buscarEsteDispositivoBTLE(): empezamos a escanear buscando: " + dispositivoBuscado + " -> " + Utilidades.stringToUUID( dispositivoBuscado ) );
+
+        this.elEscanner.startScan(filtros, settings, this.callbackDelEscaneo );
+    } // ()
+
+    // --------------------------------------------------------------
+    // --------------------------------------------------------------
+
     private void detenerBusquedaDispositivosBTLE() {
 
         if ( this.callbackDelEscaneo == null ) {
@@ -269,7 +326,8 @@ public class MainActivity extends AppCompatActivity {
 
         //this.buscarEsteDispositivoBTLE( "EPSG-GTI-PROY-3A" );
         //this.buscarEsteDispositivoBTLE( "EPSG-GTI-PROY-3A" );
-        this.buscarEsteDispositivoBTLE( "GTI");
+        //this.buscarEsteDispositivoBTLE( "GTI");
+        this.buscarEsteDispositivoUuid("0000000000000000");
 
     } // ()
 

@@ -22,11 +22,11 @@ class Database {
         // Test inicial de conexión
         this.pool.getConnection()
             .then(conn => {
-                console.log('✅ Conexión a MySQL establecida');
+                console.log(' Conexión a MySQL establecida');
                 conn.release();
             })
             .catch(err => {
-                console.error('❌ Error conectando a MySQL:', err.message);
+                console.error(' Error conectando a MySQL:', err.message);
             });
     }
 
@@ -41,20 +41,11 @@ class Database {
             const [rows] = await this.pool.execute(sql, params);
             return rows;
         } catch (err) {
-            console.error('❌ Error en ejecutarQuery:', err.message);
+            console.error(' Error en ejecutarQuery:', err.message);
             throw err;
         }
     }
 
-    /**
-     * Inicia una transacción manual
-     * @returns {Promise<Connection>}
-     */
-    async iniciarTransaccion() {
-        const conn = await this.pool.getConnection();
-        await conn.beginTransaction();
-        return conn;
-    }
 
     /**
      * Cierra todas las conexiones del pool
@@ -62,9 +53,9 @@ class Database {
     async cerrarConexion() {
         try {
             await this.pool.end();
-            console.log('🔒 Conexión MySQL cerrada correctamente');
+            console.log(' Conexión MySQL cerrada correctamente');
         } catch (err) {
-            console.error('❌ Error cerrando conexión MySQL:', err.message);
+            console.error(' Error cerrando conexión MySQL:', err.message);
         }
     }
 }

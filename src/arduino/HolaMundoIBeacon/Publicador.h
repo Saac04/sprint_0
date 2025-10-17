@@ -42,7 +42,7 @@ public:
   enum MedicionesID  {
 	CO2 = 11,
 	TEMPERATURA = 12,
-	RUIDO = 13
+	RUIDO = 13	
   };
 
   // ............................................................

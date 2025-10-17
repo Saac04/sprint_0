@@ -14,6 +14,8 @@ const PORT = process.env.PORT || 3000;
 // Crear instancia de LogicaDeNegocio
 const logicaNegocio = new LogicaDeNegocio();
 
+let server; // Variable para el servidor, se usa en el manejo de cierre
+
 // ================================
 // MIDDLEWARE
 // ================================
@@ -54,19 +56,20 @@ app.get('/api/health', (req, res) => {
 });
 
 // ================================
-// POST /api/mediciones
+// POST /api/medicion
 // Guardar nueva medición desde Android
 // Recibe: { tipo: "temperatura" | "gas", valor: number }
 // ================================
-app.post('/api/mediciones', async (req, res) => {
+app.post('/api/medicion', async (req, res) => {
 	
-	console.log('Headers recibidos:', req.headers);
+	/*console.log('Headers recibidos:', req.headers);
     console.log('Body recibido:', req.body);
     console.log('Body es objeto?', typeof req.body);
-    console.log('Body tiene tipo?', req.body?.tipo);
+    console.log('Body tiene tipo?', req.body?.tipo);*/
+
     try {
         // Validar que lleguen datos en el body
-        if (!req.body) {
+        if (Object.keys(req.body).length === 0) {
             return res.status(400).json({
                 success: false,
                 error: 'No se enviaron datos en la petición'
@@ -90,7 +93,7 @@ app.post('/api/mediciones', async (req, res) => {
         }
 
         if (datosMedicion.valor === undefined || datosMedicion.valor === null) {
-			console.log('El campo "valor" es requerido')
+			//console.log('El campo "valor" es requerido')
             return res.status(400).json({
                 success: false,
                 error: 'El campo "valor" es requerido'
@@ -100,7 +103,7 @@ app.post('/api/mediciones', async (req, res) => {
         // Validar que tipo sea "temperatura" o "gas", porque la logica de negocio solo acepta esos dos tipos
         const tiposValidos = ['temperatura', 'gas'];
         if (!tiposValidos.includes(datosMedicion.tipo.toLowerCase())) {
-			console.log( `El tipo debe ser "temperatura" o "gas". Recibido: "${datosMedicion.tipo}"`)
+			//console.log( `El tipo debe ser "temperatura" o "gas". Recibido: "${datosMedicion.tipo}"`)
             return res.status(400).json({
                 success: false,
                 error: `El tipo debe ser "temperatura" o "gas". Recibido: "${datosMedicion.tipo}"`
@@ -124,7 +127,7 @@ app.post('/api/mediciones', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error en POST /api/mediciones:', error);		
+        console.error('Error en POST /api/medicion:', error);		
         
         // Manejar diferentes tipos de errores
         if (error.message.includes('tipo') || 
@@ -157,18 +160,18 @@ app.post('/api/mediciones', async (req, res) => {
 });
 
 // ================================
-// GET /api/mediciones
+// GET /api/medicion
 // Obtener la última medición registrada
 // ================================
-app.get('/api/mediciones', async (req, res) => {
+app.get('/api/medicion', async (req, res) => {
     try {
-        console.log('Obteniendo última medición');
+        //console.log('Obteniendo última medición');
 
         // Llamar a la lógica de negocio para obtener la última medición
         const ultimaMedicion = await logicaNegocio.getMedicion();
 
         // Verificar si hay mediciones
-        if (!ultimaMedicion || ultimaMedicion.length === 0) {
+        if (!ultimaMedicion) {
             return res.status(404).json({
                 success: false,
                 error: 'No se encontraron mediciones en el sistema'
@@ -178,11 +181,11 @@ app.get('/api/mediciones', async (req, res) => {
         // Respuesta exitosa con la última medición
         res.status(200).json({
             success: true,
-            data: ultimaMedicion[0]
+            data: ultimaMedicion
         });
 
     } catch (error) {
-        console.error('Error en GET /api/mediciones:', error);
+        console.error('Error en GET /api/medicion:', error);
         
         if (error.message.includes('base de datos') || 
             error.message.includes('conexión') ||
@@ -210,8 +213,8 @@ app.use('*', (req, res) => {
         error: `Ruta no encontrada: ${req.method} ${req.originalUrl}`,
         rutas_disponibles: [
             'GET  /api/health',
-            'POST /api/mediciones (body: {tipo: "temperatura|gas", valor: number})', 
-            'GET  /api/mediciones (retorna la última medición)',
+            'POST /api/medicion (body: {tipo: "temperatura|gas", valor: number})', 
+            'GET  /api/medicion (retorna la última medición)',
         ]
     });
 });
@@ -245,7 +248,7 @@ async function iniciarServidor() {
         console.log('Conexión a base de datos exitosa');
         
         // Iniciar servidor
-        app.listen(PORT, () => {
+        server = app.listen(PORT, () => {
             console.log(`\n ============================================`);
             console.log(`   Servidor IoT iniciado exitosamente`);
             console.log(`============================================`);
@@ -253,9 +256,9 @@ async function iniciarServidor() {
             console.log(` URL Local: http://localhost:${PORT}`);
             console.log(` Health Check: http://localhost:${PORT}/api/health`);
             console.log(`\n Endpoints Disponibles:`);
-            console.log(`   POST /api/mediciones`);
+            console.log(`   POST /api/medicion`);
             console.log(`        Body: {tipo: "temperatura|gas", valor: number}`);
-            console.log(`   GET  /api/mediciones`);
+            console.log(`   GET  /api/medicion`);
             console.log(`        Retorna la última medición registrada`);
             console.log(`============================================`);
             console.log(` Servidor listo para recibir peticiones...\n`);
@@ -276,15 +279,29 @@ async function iniciarServidor() {
     }
 }
 
-// Manejar cierre graceful del servidor
-process.on('SIGTERM', () => {
-    console.log('\n Cerrando servidor graciosamente...');
-    process.exit(0);
-});
+// Manejar cierre correcto del servidor
 
+process.on('SIGTERM', () => {
+    console.log('\n Cerrando servidor...');
+    if (server) {
+        server.close(() => {
+            console.log('Conexiones cerradas');
+            process.exit(0);
+        });
+    } else {
+        process.exit(0);
+    }
+});
 process.on('SIGINT', () => {
     console.log('\n Servidor interrumpido por usuario...');
-    process.exit(0);
+    if (server) {
+        server.close(() => {
+            console.log('Conexiones cerradas');
+            process.exit(0);
+        });
+    } else {
+        process.exit(0);
+    }
 });
 
 // Inicializar servidor

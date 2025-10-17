@@ -16,7 +16,7 @@ public class Logica {
         PeticionarioREST elPeticionario = new PeticionarioREST();
         String cuerpo = constructorDeCuerpo()   ;
 
-        elPeticionario.hacerPeticionREST("POST",  "http://sagucre.upv.edu.es/api/mediciones",
+        elPeticionario.hacerPeticionREST("POST",  "http://sagucre.upv.edu.es/api/medicion",
                 cuerpo, new PeticionarioREST.RespuestaREST () {
                     @Override
                     public void callback(int codigo, String cuerpo) {

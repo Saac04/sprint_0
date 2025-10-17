@@ -1,0 +1,186 @@
+/* Reset básico que queda bien */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f5f5f5;
+    color: #333;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header */
+header {
+    text-align: center;
+    padding: 30px 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+header h1 {
+    font-size: 2em;
+    color: #2c3e50;
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    color: #7f8c8d;
+    font-size: 1.1em;
+}
+
+/* Estado de conexión */
+.estado {
+    text-align: center;
+    padding: 10px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    background-color: #fff;
+    border: 2px solid #95a5a6;
+}
+
+.estado.conectado {
+    background-color: #d4edda;
+    border-color: #28a745;
+    color: #155724;
+}
+
+.estado.error {
+    background-color: #f8d7da;
+    border-color: #dc3545;
+    color: #721c24;
+}
+
+#estado-texto {
+    font-weight: bold;
+}
+
+/* Sección principal */
+main {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.medicion-actual h2 {
+    font-size: 1.5em;
+    color: #2c3e50;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #ecf0f1;
+}
+
+/* Información de medición */
+.medicion-info {
+    padding: 20px 0;
+}
+
+.campo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid #ecf0f1;
+}
+
+.campo:last-child {
+    border-bottom: none;
+}
+
+.label {
+    font-weight: bold;
+    color: #34495e;
+    font-size: 1.1em;
+}
+
+.valor {
+    color: #2c3e50;
+    font-size: 1.1em;
+}
+
+.valor-grande {
+    color: #2980b9;
+    font-size: 2em;
+    font-weight: bold;
+}
+
+/* Mensajes */
+.sin-datos,
+.error-mensaje {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.sin-datos p {
+    color: #7f8c8d;
+    font-size: 1.2em;
+}
+
+.error-mensaje {
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 5px;
+}
+
+.error-mensaje p {
+    color: #721c24;
+    font-size: 1.1em;
+}
+
+/* Controles */
+.controles {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 2px solid #ecf0f1;
+    text-align: center;
+}
+
+.btn-actualizar {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 15px 40px;
+    font-size: 1.1em;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.btn-actualizar:hover {
+    background-color: #2980b9;
+}
+
+.btn-actualizar:active {
+    background-color: #21618c;
+}
+
+.btn-actualizar:disabled {
+    background-color: #95a5a6;
+    cursor: not-allowed;
+}
+
+.info-actualizacion {
+    margin-top: 20px;
+}
+
+.info-actualizacion p {
+    color: #7f8c8d;
+    font-size: 0.9em;
+    margin: 5px 0;
+}
+
+#ultima-actualizacion {
+    font-weight: bold;
+    color: #34495e;
+}
