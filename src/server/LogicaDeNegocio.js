@@ -1,7 +1,7 @@
 const { Database } = require('./database');
 require('./logger'); // FUNCION PARA USAR UN LOG LOCAL PORQUE NO SE EN DONDE SE GUARDA LOS CONSOLE.LOG DE NORMAL
 
-
+// Clase principal que encapsula la lógica de negocio para el manejo de mediciones
 class LogicaDeNegocio {
     constructor() {
         this.database = new Database();
@@ -92,6 +92,7 @@ class LogicaDeNegocio {
     // MÉTODOS DE VALIDACIÓN
     // ================================
 
+    // Valida que los datos de entrada sean correctos y existan los campos requeridos
     validarDatosEntrada(datos) {
         if (!datos || typeof datos !== 'object') {
             throw new Error('Los datos de la medición son requeridos');
@@ -106,6 +107,7 @@ class LogicaDeNegocio {
         }
     }
 
+    // Valida que el tipo de medición sea uno de los permitidos
     validarTipoMedicion(tipo) {
         const tiposValidos = ['temperatura', 'gas'];
         
@@ -114,6 +116,7 @@ class LogicaDeNegocio {
         }
     }
 
+    // Valida que el valor de la medición sea numérico y esté dentro de un rango razonable
     validarValorMedicion(valor) {
         // Convertir a número si es string
         const valorNumerico = Number(valor);
@@ -134,6 +137,7 @@ class LogicaDeNegocio {
     // MÉTODOS DE PROCESAMIENTO
     // ================================
 
+    // Prepara los datos para ser insertados en la base de datos
     prepararDatosParaDB(datos) {
         return {
             dispositivo_id: datos.dispositivo_id || 'default_device', // Aun no guardo el id de dispositivo por ende siempre sera default_device
@@ -143,6 +147,7 @@ class LogicaDeNegocio {
         };
     }
 
+    // Construye una consulta SQL con filtros dinámicos (no se usa en los endpoints actuales, pero es útil para futuras ampliaciones)
     construirQueryConFiltros(filtros) {
         let query = 'SELECT id, dispositivo_id, tipo, valor, fecha FROM mediciones';
         let condiciones = [];
@@ -193,6 +198,7 @@ class LogicaDeNegocio {
         return { query, params };
     }
 
+    // Formatea una medición obtenida de la base de datos para devolverla al frontend
     formatearMedicion(medicion) {
         return {
             id: medicion.id,
@@ -207,6 +213,7 @@ class LogicaDeNegocio {
     // MÉTODO AUXILIAR PARA VERIFICACIÓN
     // ================================
 
+    // Verifica la conexión a la base de datos ejecutando una consulta simple
     async verificarConexion() {
         try {
             console.log(' Verificando conexión a base de datos...');

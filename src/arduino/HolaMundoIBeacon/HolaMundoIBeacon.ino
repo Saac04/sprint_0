@@ -124,8 +124,6 @@ void loop () {
   using namespace Loop;
   using namespace Globales;
 
-  esperar ( 5000);
-
   cont++;
 
   elPuerto.escribir( "\n---- loop(): empieza " );
@@ -144,20 +142,19 @@ void loop () {
 							cont,
 							1000 // intervalo de emisión
 							);
-  
-
-
 
 
   // 
   // mido y publico
   // 
   int valorTemperatura = elMedidor.medirTemperatura();
-  
+
+
   elPublicador.publicarTemperatura( valorTemperatura, 
 									cont,
 									1000 // intervalo de emisión
 									);
+
 
   // 
   // prueba para emitir un iBeacon y poner
@@ -178,7 +175,7 @@ void loop () {
   // elPublicador.laEmisora.emitirAnuncioIBeaconLibre ( &datos[0], 21 );
   //elPublicador.laEmisora.emitirAnuncioIBeaconLibre ( "Este tiene 21 chars!!", 21 );
 
-  esperar( 20000 );
+  esperar( 5000 );
 
   elPublicador.laEmisora.detenerAnuncio();
   

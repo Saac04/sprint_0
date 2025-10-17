@@ -4,8 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Biometría IoT - Mediciones en Tiempo Real</title>
-	<link rel="stylesheet" href="estilo.css">
-
+    <link rel="stylesheet" href="estilo.css">
+    <!-- 
+        Hoja de estilos principal para la interfaz.
+        Asegúrate de que 'estilo.css' esté en la misma carpeta.
+    -->
 </head>
 <body>
     <div class="container">
@@ -14,27 +17,28 @@
         </header>
 
         <main>
-            <!-- Estado de conexión -->
+            <!-- Estado de conexión: muestra mensajes como "Conectando...", "Conectado", "Error", etc. -->
             <div id="estado-conexion" class="estado">
                 <span id="estado-texto">Conectando...</span>
             </div>
 
-            <!-- Última medición -->
+            <!-- Sección principal donde se muestra la última medición recibida -->
             <section class="medicion-actual">
                 <h2>Última Medición</h2>
                 
                 <div id="medicion-container">
                     <div class="medicion-info">
+                        <!-- Tipo de medición (ej: Temperatura, Gas) -->
                         <div class="campo">
                             <span class="label">Tipo:</span>
                             <span id="tipo-valor" class="valor">--</span>
                         </div>
-                        
+                        <!-- Valor de la medición (con unidades) -->
                         <div class="campo">
                             <span class="label">Valor:</span>
                             <span id="medicion-valor" class="valor-grande">--</span>
                         </div>
-                        
+                        <!-- Fecha y hora de la medición -->
                         <div class="campo">
                             <span class="label">Fecha y Hora:</span>
                             <span id="timestamp-valor" class="valor">--</span>
@@ -42,33 +46,36 @@
                     </div>
                 </div>
 
-                <!-- Mensaje cuando no hay datos -->
+                <!-- Mensaje mostrado cuando no hay datos disponibles -->
                 <div id="sin-datos" class="sin-datos" style="display: none;">
                     <p>No hay mediciones disponibles</p>
                 </div>
 
-                <!-- Mensaje de error -->
+                <!-- Mensaje de error mostrado si ocurre un problema al cargar los datos -->
                 <div id="error-mensaje" class="error-mensaje" style="display: none;">
                     <p id="error-texto">Error al cargar datos</p>
                 </div>
             </section>
 
-            <!-- Botón de actualización manual -->
+            <!-- Controles de usuario: botón para actualizar manualmente y estado de actualización -->
             <div class="controles">
+                <!-- Botón para forzar la actualización de la medición -->
                 <button id="btn-actualizar" class="btn-actualizar">
                     Actualizar Ahora
                 </button>
                 
                 <div class="info-actualizacion">
+                    <!-- Mensaje informativo sobre la actualización automática -->
                     <p>Actualización automática cada 20 segundos</p>
+                    <!-- Muestra la hora de la última actualización exitosa -->
                     <p id="ultima-actualizacion">Última actualización: --</p>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- Scripts -->
-    <script src="LogicaDeNegocio.js"></script>
-    <script src="app.js"></script>
+    <!-- Scripts principales de la aplicación -->
+    <script src="LogicaDeNegocio.js"></script> <!-- Lógica de negocio del frontend -->
+    <script src="app.js"></script> <!-- Controlador principal de la interfaz -->
 </body>
 </html>

@@ -1,0 +1,8 @@
+NODE_ENV=production
+DB_HOST=localhost
+DB_USER=root1
+DB_PASSWORD=9Dlxn826@
+DB_NAME=sagucrea
+DB_PORT=3306
+PORT=3000
+FRONTEND_URL=http://sagucre.upv.edu.es/biometria/scr

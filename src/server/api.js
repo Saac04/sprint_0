@@ -2,39 +2,38 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const { LogicaDeNegocio } = require('./LogicaDeNegocio');
-require('./logger'); // FUNCION PARA USAR UN LOG LOCAL PORQUE NO SE EN DONDE SE GUARDA LOS CONSOLE.LOG DE NORMAL
+require('./logger'); // Permite registrar logs en un archivo local
 
-// Configurar variables de entorno
+// Configurar variables de entorno desde .env
 dotenv.config();
 
 // Crear instancia de Express
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Crear instancia de LogicaDeNegocio
+// Crear instancia de la lógica de negocio (gestiona la interacción con la BD)
 const logicaNegocio = new LogicaDeNegocio();
 
-let server; // Variable para el servidor, se usa en el manejo de cierre
+let server; // Variable para almacenar el servidor, útil para cierre controlado
 
 // ================================
 // MIDDLEWARE
 // ================================
 
-// debido a que el front y el backend estan / estaran en dominios diferentes
-// se usa CORS para permitir esas conexiones
+// Configuración de CORS para permitir peticiones desde el frontend (dominios distintos)
 app.use(cors({
     origin: process.env.FRONTEND_URL || '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true
 }));
 
-// se hace parse de JSON para recibir datos en el body
+// Middleware para parsear JSON en el body de las peticiones
 app.use(express.json({ limit: '5mb' }));
 
-// y tambien en la URL encoded data
+// Middleware para parsear datos urlencoded (formularios)
 app.use(express.urlencoded({ extended: true }));
 
-// Middleware para logging de requests
+// Middleware para logging de cada request recibido
 app.use((req, res, next) => {
     const timestamp = new Date().toISOString();
     console.log(`[${timestamp}] ${req.method} ${req.url} - IP: ${req.ip}`);
@@ -45,8 +44,7 @@ app.use((req, res, next) => {
 // RUTAS DE LA API REST
 // ================================
 
-// Con este endpoint se puede verificar que el servidor está corriendo
-// y obtener un mensaje simple de estado, no se si cuenta como Test automatico, pero sirve para monitoreo
+// Endpoint de salud para verificar que el servidor está corriendo correctamente
 app.get('/api/health', (req, res) => {
     res.status(200).json({
         success: true,
@@ -57,16 +55,10 @@ app.get('/api/health', (req, res) => {
 
 // ================================
 // POST /api/medicion
-// Guardar nueva medición desde Android
-// Recibe: { tipo: "temperatura" | "gas", valor: number }
+// Guarda una nueva medición enviada desde Android o cualquier cliente autorizado
+// Espera en el body: { tipo: "temperatura" | "gas", valor: number }
 // ================================
 app.post('/api/medicion', async (req, res) => {
-	
-	/*console.log('Headers recibidos:', req.headers);
-    console.log('Body recibido:', req.body);
-    console.log('Body es objeto?', typeof req.body);
-    console.log('Body tiene tipo?', req.body?.tipo);*/
-
     try {
         // Validar que lleguen datos en el body
         if (Object.keys(req.body).length === 0) {
@@ -75,17 +67,15 @@ app.post('/api/medicion', async (req, res) => {
                 error: 'No se enviaron datos en la petición'
             });
         }
-		
+
         // Extraer datos del request
         const datosMedicion = req.body;
-        
+
         // Log para debugging
         console.log('Datos recibidos del Android:', JSON.stringify(datosMedicion));
-		
 
         // Validación básica de campos requeridos
         if (!datosMedicion.tipo) {
-			//console.log( 'El campo "tipo" es requerido')
             return res.status(400).json({
                 success: false,
                 error: 'El campo "tipo" es requerido'
@@ -93,27 +83,25 @@ app.post('/api/medicion', async (req, res) => {
         }
 
         if (datosMedicion.valor === undefined || datosMedicion.valor === null) {
-			//console.log('El campo "valor" es requerido')
             return res.status(400).json({
                 success: false,
                 error: 'El campo "valor" es requerido'
             });
         }
 
-        // Validar que tipo sea "temperatura" o "gas", porque la logica de negocio solo acepta esos dos tipos
+        // Validar que tipo sea "temperatura" o "gas"
         const tiposValidos = ['temperatura', 'gas'];
         if (!tiposValidos.includes(datosMedicion.tipo.toLowerCase())) {
-			//console.log( `El tipo debe ser "temperatura" o "gas". Recibido: "${datosMedicion.tipo}"`)
             return res.status(400).json({
                 success: false,
                 error: `El tipo debe ser "temperatura" o "gas". Recibido: "${datosMedicion.tipo}"`
             });
         }
 
+        // Guardar la medición usando la lógica de negocio
         const resultado = await logicaNegocio.guardarMedicion(datosMedicion);
-		
 
-        // Si todo va bien responder con éxito
+        // Si todo va bien responder con éxito y los datos guardados
         res.status(201).json({
             success: true,
             message: 'Medición guardada exitosamente',
@@ -127,21 +115,20 @@ app.post('/api/medicion', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error en POST /api/medicion:', error);		
-        
-        // Manejar diferentes tipos de errores
-        if (error.message.includes('tipo') || 
-            error.message.includes('valor') || 
-            error.message.includes('rango') || 
+        console.error('Error en POST /api/medicion:', error);
+
+        // Manejar diferentes tipos de errores y devolver el código adecuado
+        if (error.message.includes('tipo') ||
+            error.message.includes('valor') ||
+            error.message.includes('rango') ||
             error.message.includes('numérico')) {
-			
             return res.status(400).json({
                 success: false,
                 error: error.message
             });
         }
-        
-        if (error.message.includes('base de datos') || 
+
+        if (error.message.includes('base de datos') ||
             error.message.includes('conexión') ||
             error.code === 'ECONNREFUSED') {
             return res.status(503).json({
@@ -161,13 +148,11 @@ app.post('/api/medicion', async (req, res) => {
 
 // ================================
 // GET /api/medicion
-// Obtener la última medición registrada
+// Devuelve la última medición registrada en la base de datos
 // ================================
 app.get('/api/medicion', async (req, res) => {
     try {
-        //console.log('Obteniendo última medición');
-
-        // Llamar a la lógica de negocio para obtener la última medición
+        // Obtener la última medición usando la lógica de negocio
         const ultimaMedicion = await logicaNegocio.getMedicion();
 
         // Verificar si hay mediciones
@@ -186,8 +171,8 @@ app.get('/api/medicion', async (req, res) => {
 
     } catch (error) {
         console.error('Error en GET /api/medicion:', error);
-        
-        if (error.message.includes('base de datos') || 
+
+        if (error.message.includes('base de datos') ||
             error.message.includes('conexión') ||
             error.code === 'ECONNREFUSED') {
             return res.status(503).json({
@@ -206,6 +191,7 @@ app.get('/api/medicion', async (req, res) => {
 
 // ================================
 // RUTA CATCH-ALL PARA 404
+// Devuelve error si la ruta no existe
 // ================================
 app.use('*', (req, res) => {
     res.status(404).json({
@@ -213,7 +199,7 @@ app.use('*', (req, res) => {
         error: `Ruta no encontrada: ${req.method} ${req.originalUrl}`,
         rutas_disponibles: [
             'GET  /api/health',
-            'POST /api/medicion (body: {tipo: "temperatura|gas", valor: number})', 
+            'POST /api/medicion (body: {tipo: "temperatura|gas", valor: number})',
             'GET  /api/medicion (retorna la última medición)',
         ]
     });
@@ -221,10 +207,11 @@ app.use('*', (req, res) => {
 
 // ================================
 // MIDDLEWARE DE MANEJO DE ERRORES GLOBAL
+// Captura cualquier error no manejado en la aplicación
 // ================================
 app.use((err, req, res, next) => {
     console.error('Error no manejado:', err);
-    
+
     res.status(500).json({
         success: false,
         error: 'Error interno del servidor',
@@ -237,16 +224,14 @@ app.use((err, req, res, next) => {
 // INICIALIZACIÓN DEL SERVIDOR
 // ================================
 
-//Originalmente la inicialización del servidor era mas sencilla, pero despues de varios errores iniciales
-//lo pasé por chatGPT, logró arrelgar el error, y ademas dejo los console.log y me gústo como quedó asi que lo dejo asi
-
+// Inicializa el servidor solo si la conexión a la base de datos es exitosa
 async function iniciarServidor() {
     try {
         // Verificar conexión a base de datos antes de iniciar
         console.log('Verificando conexión a base de datos...');
         await logicaNegocio.verificarConexion();
         console.log('Conexión a base de datos exitosa');
-        
+
         // Iniciar servidor
         server = app.listen(PORT, () => {
             console.log(`\n ============================================`);
@@ -263,7 +248,7 @@ async function iniciarServidor() {
             console.log(`============================================`);
             console.log(` Servidor listo para recibir peticiones...\n`);
         });
-        
+
     } catch (error) {
         console.error('\n ============================================');
         console.error('   Error al iniciar servidor');
@@ -279,8 +264,10 @@ async function iniciarServidor() {
     }
 }
 
-// Manejar cierre correcto del servidor
-
+// ================================
+// MANEJO DE CIERRE CONTROLADO DEL SERVIDOR
+// Permite cerrar el servidor correctamente ante señales del sistema
+// ================================
 process.on('SIGTERM', () => {
     console.log('\n Cerrando servidor...');
     if (server) {

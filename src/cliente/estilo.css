@@ -1,31 +1,36 @@
 /* Reset básico que queda bien */
+/* Elimina márgenes y paddings por defecto y aplica box-sizing para facilitar el diseño responsivo */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
+/* Estilos generales del body */
 body {
     font-family: Arial, sans-serif;
-    background-color: #f5f5f5;
+    background-color: #f5f5f5; /* Fondo gris claro para toda la página */
     color: #333;
     line-height: 1.6;
 }
 
+/* Contenedor principal centrado y con padding */
 .container {
     max-width: 800px;
     margin: 0 auto;
     padding: 20px;
 }
 
-/* Header */
+/* =====================
+   Header
+   ===================== */
 header {
     text-align: center;
     padding: 30px 20px;
     background-color: #fff;
     border-radius: 8px;
     margin-bottom: 20px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Sombra sutil */
 }
 
 header h1 {
@@ -34,12 +39,16 @@ header h1 {
     margin-bottom: 10px;
 }
 
+/* Subtítulo opcional */
 .subtitle {
     color: #7f8c8d;
     font-size: 1.1em;
 }
 
-/* Estado de conexión */
+/* =====================
+   Estado de conexión
+   ===================== */
+/* Caja que muestra el estado de conexión (conectado, error, etc.) */
 .estado {
     text-align: center;
     padding: 10px;
@@ -49,23 +58,28 @@ header h1 {
     border: 2px solid #95a5a6;
 }
 
+/* Estado conectado: fondo y borde verde */
 .estado.conectado {
     background-color: #d4edda;
     border-color: #28a745;
     color: #155724;
 }
 
+/* Estado error: fondo y borde rojo */
 .estado.error {
     background-color: #f8d7da;
     border-color: #dc3545;
     color: #721c24;
 }
 
+/* Texto del estado en negrita */
 #estado-texto {
     font-weight: bold;
 }
 
-/* Sección principal */
+/* =====================
+   Sección principal
+   ===================== */
 main {
     background-color: #fff;
     padding: 30px;
@@ -73,6 +87,7 @@ main {
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
+/* Título de la sección de medición actual */
 .medicion-actual h2 {
     font-size: 1.5em;
     color: #2c3e50;
@@ -81,11 +96,14 @@ main {
     border-bottom: 2px solid #ecf0f1;
 }
 
-/* Información de medición */
+/* =====================
+   Información de medición
+   ===================== */
 .medicion-info {
     padding: 20px 0;
 }
 
+/* Cada campo de la medición (tipo, valor, fecha) */
 .campo {
     display: flex;
     justify-content: space-between;
@@ -98,47 +116,58 @@ main {
     border-bottom: none;
 }
 
+/* Etiqueta del campo (ej: Tipo, Valor) */
 .label {
     font-weight: bold;
     color: #34495e;
     font-size: 1.1em;
 }
 
+/* Valor del campo */
 .valor {
     color: #2c3e50;
     font-size: 1.1em;
 }
 
+/* Valor destacado (valor principal de la medición) */
 .valor-grande {
     color: #2980b9;
     font-size: 2em;
     font-weight: bold;
 }
 
-/* Mensajes */
+/* =====================
+   Mensajes de estado
+   ===================== */
+/* Mensaje cuando no hay datos */
 .sin-datos,
 .error-mensaje {
     text-align: center;
     padding: 40px 20px;
 }
 
+/* Texto para "sin datos" */
 .sin-datos p {
     color: #7f8c8d;
     font-size: 1.2em;
 }
 
+/* Caja de error */
 .error-mensaje {
     background-color: #f8d7da;
     border: 1px solid #f5c6cb;
     border-radius: 5px;
 }
 
+/* Texto de error */
 .error-mensaje p {
     color: #721c24;
     font-size: 1.1em;
 }
 
-/* Controles */
+/* =====================
+   Controles de usuario
+   ===================== */
 .controles {
     margin-top: 30px;
     padding-top: 20px;
@@ -146,6 +175,7 @@ main {
     text-align: center;
 }
 
+/* Botón para actualizar la medición manualmente */
 .btn-actualizar {
     background-color: #3498db;
     color: white;
@@ -157,19 +187,23 @@ main {
     transition: background-color 0.3s ease;
 }
 
+/* Efecto hover para el botón */
 .btn-actualizar:hover {
     background-color: #2980b9;
 }
 
+/* Efecto al hacer click */
 .btn-actualizar:active {
     background-color: #21618c;
 }
 
+/* Botón deshabilitado */
 .btn-actualizar:disabled {
     background-color: #95a5a6;
     cursor: not-allowed;
 }
 
+/* Información sobre la actualización automática */
 .info-actualizacion {
     margin-top: 20px;
 }
@@ -180,6 +214,7 @@ main {
     margin: 5px 0;
 }
 
+/* Hora de la última actualización */
 #ultima-actualizacion {
     font-weight: bold;
     color: #34495e;

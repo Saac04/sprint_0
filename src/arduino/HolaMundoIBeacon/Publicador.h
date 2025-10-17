@@ -15,6 +15,10 @@ class Publicador {
   // ............................................................
 private:
 
+  // Cambie el ibeacon porque al tener characteres alfanuméricos
+  // no se creaba bien el beacon e imposibilitaba el envio del ibeacon
+  	
+  // UUID para iBeacon (16 bytes)
 	uint8_t beaconUUID[16] = {
     0x45, 0x50, 0x53, 0x47,
     0x2D, 0x47, 0x54, 0x49,

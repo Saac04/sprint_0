@@ -15,26 +15,36 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
 // ------------------------------------------------------------------------
+// Clase que gestiona peticiones HTTP REST de forma asíncrona usando AsyncTask
+// Permite enviar datos al backend y recibir respuestas sin bloquear la UI
 // ------------------------------------------------------------------------
 public class PeticionarioREST extends AsyncTask<Void, Void, Boolean> {
 
-    // --------------------------------------------------------------------
-    // --------------------------------------------------------------------
+    // Método HTTP (GET, POST, etc.)
     private String elMetodo;
+    // URL destino de la petición
     private String urlDestino;
+    // Cuerpo de la petición (JSON), solo para métodos que lo requieran
     private String elCuerpo = null;
+    // Interfaz para manejar la respuesta recibida
     private RespuestaREST laRespuesta;
+    // Código HTTP recibido en la respuesta
     private int codigoRespuesta;
+    // Cuerpo de la respuesta recibido del servidor
     private String cuerpoRespuesta = "";
 
-    // --------------------------------------------------------------------
-    // --------------------------------------------------------------------
+    // Constructor: solo muestra log de creación
     public PeticionarioREST() {
         Log.d("clienterestandroid", "constructor()");
     }
 
-    // --------------------------------------------------------------------
-    // --------------------------------------------------------------------
+    /**
+     * Método principal para lanzar una petición REST.
+     * @param metodo Método HTTP (ej: "POST", "GET")
+     * @param urlDestino URL destino de la petición
+     * @param cuerpo Cuerpo JSON para la petición (solo si no es GET)
+     * @param laRespuesta Callback para manejar la respuesta
+     */
     public void hacerPeticionREST(String metodo, String urlDestino, String cuerpo, RespuestaREST laRespuesta) {
         this.elMetodo = metodo;
         this.urlDestino = urlDestino;
@@ -44,8 +54,10 @@ public class PeticionarioREST extends AsyncTask<Void, Void, Boolean> {
         this.execute(); // otro thread ejecutará doInBackground()
     }
 
-    // --------------------------------------------------------------------
-    // --------------------------------------------------------------------
+    /**
+     * Método que se ejecuta en segundo plano (hilo aparte).
+     * Realiza la conexión HTTP, envía la petición y recibe la respuesta.
+     */
     @Override
     protected Boolean doInBackground(Void... params) {
         Log.d("clienterestandroid", "doInBackground()");
@@ -62,31 +74,23 @@ public class PeticionarioREST extends AsyncTask<Void, Void, Boolean> {
             URL url = new URL(urlDestino);
 
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
+            connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
             connection.setRequestMethod(this.elMetodo);
             // connection.setRequestProperty("Accept", "*/*);
 
-            // connection.setUseCaches(false);
             connection.setDoInput(true);
 
+            // Si el método no es GET y hay cuerpo, lo envía en la petición
             if (!this.elMetodo.equals("GET") && this.elCuerpo != null) {
                 Log.d("clienterestandroid", "doInBackground(): no es get, pongo cuerpo");
                 connection.setDoOutput(true);
-                // si no es GET, pongo el cuerpo que me den en la peticin
+
                 DataOutputStream dos = new DataOutputStream(connection.getOutputStream());
                 Log.d("clienterestandroid","doInBackground(): lo que se escribe: " + this.elCuerpo );
 
                 try {
-                    // Convertir el String a JSONObject
+                    // Convierte el String a JSONObject para asegurar formato correcto
                     JSONObject json = new JSONObject(this.elCuerpo);
-
-                    // Acceder a los valores
-                    /*String tipo = json.getString("tipo");
-                    int valor = json.getInt("valor");
-
-                    Log.d("clienterestandroid","Tipo: " + tipo);
-                    Log.d("clienterestandroid","Valor: " + valor);*/
-
                     String elCuerpoFormateado = json.toString();
                     byte[] postData = elCuerpoFormateado.getBytes(StandardCharsets.UTF_8);
                     dos.write(postData);
@@ -96,13 +100,10 @@ public class PeticionarioREST extends AsyncTask<Void, Void, Boolean> {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-
             }
 
-            // ya he enviado la petición
-            Log.d("clienterestandroid", "doInBackground(): peticin enviada ");
-
-            // ahora obtengo la respuesta
+            // Petición enviada, ahora obtiene la respuesta
+            Log.d("clienterestandroid", "doInBackground(): petición enviada ");
 
             int rc = connection.getResponseCode();
             String rm = connection.getResponseMessage();
@@ -111,7 +112,7 @@ public class PeticionarioREST extends AsyncTask<Void, Void, Boolean> {
             this.codigoRespuesta = rc;
 
             try {
-
+                // Lee el cuerpo de la respuesta si existe
                 InputStream is = connection.getInputStream();
                 BufferedReader br = new BufferedReader(new InputStreamReader(is));
 
@@ -130,7 +131,7 @@ public class PeticionarioREST extends AsyncTask<Void, Void, Boolean> {
                 connection.disconnect();
 
             } catch (IOException ex) {
-                // dispara excepcin cuando la respuesta REST no tiene cuerpo y yo intento getInputStream()
+                // Puede ocurrir si la respuesta REST no tiene cuerpo
                 Log.d("clienterestandroid", "doInBackground() : parece que no hay cuerpo en la respuesta");
             }
 
@@ -143,16 +144,19 @@ public class PeticionarioREST extends AsyncTask<Void, Void, Boolean> {
         return false; // doInBackground() NO termina bien
     } // ()
 
-    // --------------------------------------------------------------------
-    // --------------------------------------------------------------------
+    /**
+     * Método que se ejecuta en el hilo principal tras doInBackground().
+     * Llama al callback con el código y cuerpo de la respuesta.
+     */
     protected void onPostExecute(Boolean comoFue) {
-        // llamado tras doInBackground()
         Log.d("clienterestandroid", "onPostExecute() comoFue = " + comoFue);
         this.laRespuesta.callback(this.codigoRespuesta, this.cuerpoRespuesta);
     }
 
-    // --------------------------------------------------------------------
-    // --------------------------------------------------------------------
+    /**
+     * Interfaz para manejar la respuesta REST de forma asíncrona.
+     * Implementa el método callback para recibir código y cuerpo.
+     */
     public interface RespuestaREST {
         void callback(int codigo, String cuerpo);
     }

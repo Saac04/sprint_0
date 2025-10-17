@@ -12,15 +12,17 @@ class LogicaDeNegocio {
 
     // ------------------------------------------------------------------------
     // MÉTODO: getMedicion()
-    // Obtiene la última medición del backend
+    // Obtiene la última medición del backend mediante una petición HTTP GET.
+    // Devuelve un objeto con success:true y la medición formateada si todo va bien,
+    // o success:false y el mensaje de error si ocurre algún problema.
     // ------------------------------------------------------------------------
     async getMedicion() {
         console.log('[LogicaDeNegocio] getMedicion() - Iniciando consulta...');
-		const url = 'https://sagucre.upv.edu.es/api/medicion'
+        const url = 'https://sagucre.upv.edu.es/api/medicion'
 
         try {
-            // Hacer petición al backend mediante el peticionario
-			const response = await fetch(url, {
+            // Hacer petición al backend mediante fetch
+            const response = await fetch(url, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -28,7 +30,7 @@ class LogicaDeNegocio {
                 }
             });
 
-			// Leer el cuerpo de la respuesta
+            // Leer el cuerpo de la respuesta
             const datos = await response.json();
 
             // Verificar si la petición fue exitosa
@@ -69,10 +71,11 @@ class LogicaDeNegocio {
 
     // ------------------------------------------------------------------------
     // Validar estructura de la medición recibida
+    // Lanza un error si falta algún campo requerido o si los datos no son válidos.
     // ------------------------------------------------------------------------
     validarEstructuraMedicion(medicion) {
-		console.log(medicion)
-		
+        console.log(medicion)
+        
         const camposRequeridos = ['id', 'tipo', 'valor', 'fecha'];
         
         for (const campo of camposRequeridos) {
@@ -95,6 +98,7 @@ class LogicaDeNegocio {
 
     // ------------------------------------------------------------------------
     // Formatear medición para mostrar en la interfaz
+    // Devuelve un objeto con los campos listos para mostrar en la UI.
     // ------------------------------------------------------------------------
     formatearMedicion(medicion) {
         return {
@@ -111,6 +115,7 @@ class LogicaDeNegocio {
 
     // ------------------------------------------------------------------------
     // Formatear el tipo de medición para mostrar
+    // Convierte el tipo técnico a una cadena amigable para el usuario.
     // ------------------------------------------------------------------------
     formatearTipo(tipo) {
         const tiposFormateados = {
@@ -122,6 +127,7 @@ class LogicaDeNegocio {
 
     // ------------------------------------------------------------------------
     // Formatear el valor según el tipo de medición
+    // Redondea el valor y añade la unidad correspondiente.
     // ------------------------------------------------------------------------
     formatearValor(valor, tipo) {
         // Redondear a 2 decimales
@@ -140,9 +146,10 @@ class LogicaDeNegocio {
 
     // ------------------------------------------------------------------------
     // Formatear fecha y hora para mostrar
+    // Convierte el timestamp ISO a una cadena legible en español.
     // ------------------------------------------------------------------------
     formatearFecha(timestamp) {
-		    console.log('[DEBUG] Timestamp recibido:', timestamp);
+        console.log('[DEBUG] Timestamp recibido:', timestamp);
 
         try {
             const fecha = new Date(timestamp);

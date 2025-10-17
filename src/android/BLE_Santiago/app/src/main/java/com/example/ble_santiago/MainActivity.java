@@ -1,5 +1,7 @@
 package com.example.ble_santiago;
+
 // ------------------------------------------------------------------
+// Imports necesarios para Bluetooth, permisos, logging y concurrencia
 // ------------------------------------------------------------------
 
 import android.Manifest;
@@ -25,28 +27,29 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 // ------------------------------------------------------------------
+// Clase principal de la actividad Android
 // ------------------------------------------------------------------
 
 public class MainActivity extends AppCompatActivity {
 
-    // --------------------------------------------------------------
-    // --------------------------------------------------------------
+    // Etiqueta para los logs
     private static final String ETIQUETA_LOG = ">>>>";
 
+    // Código para la petición de permisos
     private static final int CODIGO_PETICION_PERMISOS = 11223344;
 
-    // --------------------------------------------------------------
-    // --------------------------------------------------------------
+    // Escáner BLE y callback para resultados de escaneo
     private BluetoothLeScanner elEscanner;
-
     private ScanCallback callbackDelEscaneo = null;
 
+    // Variables para evitar duplicados y controlar el flujo de mediciones
     private int contadorAndroid = 0;
     private boolean recibioGas = false;
     private boolean recibioTemperatura = false;
 
-    // --------------------------------------------------------------
-    // --------------------------------------------------------------
+    // ------------------------------------------------------------------
+    // Escanea todos los dispositivos BLE cercanos y muestra su información
+    // ------------------------------------------------------------------
     private void buscarTodosLosDispositivosBTLE() {
         Log.d(ETIQUETA_LOG, " buscarTodosLosDispositivosBTL(): empieza ");
 
@@ -65,14 +68,12 @@ public class MainActivity extends AppCompatActivity {
             public void onBatchScanResults(List<ScanResult> results) {
                 super.onBatchScanResults(results);
                 Log.d(ETIQUETA_LOG, " buscarTodosLosDispositivosBTL(): onBatchScanResults() ");
-
             }
 
             @Override
             public void onScanFailed(int errorCode) {
                 super.onScanFailed(errorCode);
                 Log.d(ETIQUETA_LOG, " buscarTodosLosDispositivosBTL(): onScanFailed() ");
-
             }
         };
 
@@ -82,8 +83,10 @@ public class MainActivity extends AppCompatActivity {
 
     } // ()
 
-    // --------------------------------------------------------------
-    // --------------------------------------------------------------
+    // ------------------------------------------------------------------
+    // Muestra información detallada del dispositivo BLE detectado
+    // Incluye datos de la trama iBeacon y valores de medición
+    // ------------------------------------------------------------------
     private void mostrarInformacionDispositivoBTLE( ScanResult resultado ) {
 
         BluetoothDevice bluetoothDevice = resultado.getDevice();
@@ -96,6 +99,7 @@ public class MainActivity extends AppCompatActivity {
         Log.d(ETIQUETA_LOG, " nombre = " + bluetoothDevice.getName());
         Log.d(ETIQUETA_LOG, " toString = " + bluetoothDevice.toString());
 
+        // Se puede mostrar el UUID si está disponible
         /*
         ParcelUuid[] puuids = bluetoothDevice.getUuids();
         if ( puuids.length >= 1 ) {
@@ -109,6 +113,7 @@ public class MainActivity extends AppCompatActivity {
         Log.d(ETIQUETA_LOG, " bytes = " + new String(bytes));
         Log.d(ETIQUETA_LOG, " bytes (" + bytes.length + ") = " + Utilidades.bytesToHexString(bytes));
 
+        // Procesa la trama iBeacon para extraer información relevante
         TramaIBeacon tib = new TramaIBeacon(bytes);
 
         Log.d(ETIQUETA_LOG, " ----------------------------------------------------");
@@ -126,7 +131,6 @@ public class MainActivity extends AppCompatActivity {
         Log.d(ETIQUETA_LOG, " major  = " + Utilidades.bytesToHexString(major) + "( "
                 + Utilidades.bytesToInt(major) + " ) ");
 
-
         int tipoMedicion = major[0] & 0xFF ;
         Log.d(ETIQUETA_LOG, " tipo medicion  = " + tipoMedicion);
 
@@ -143,15 +147,14 @@ public class MainActivity extends AppCompatActivity {
 
     } // ()
 
-    // --------------------------------------------------------------
-    // --------------------------------------------------------------
+    // ------------------------------------------------------------------
+    // Escanea solo el dispositivo BLE con el nombre especificado
+    // Utiliza filtros y modo de escaneo rápido
+    // ------------------------------------------------------------------
     private void buscarEsteDispositivoBTLE(final String dispositivoBuscado) {
         Log.d(ETIQUETA_LOG, " buscarEsteDispositivoBTLE(): empieza ");
 
         Log.d(ETIQUETA_LOG, "  buscarEsteDispositivoBTLE(): instalamos scan callback ");
-
-
-        // super.onScanResult(ScanSettings.SCAN_MODE_LOW_LATENCY, result); para ahorro de energía
 
         this.callbackDelEscaneo = new ScanCallback() {
             @Override
@@ -160,27 +163,24 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(ETIQUETA_LOG, "  buscarEsteDispositivoBTLE(): onScanResult() ");
 
                 mostrarInformacionDispositivoBTLE( resultado );
-                guardarMedicion( resultado );
+                guardarMedicion( resultado ); // Envía la medición al backend
             }
 
             @Override
             public void onBatchScanResults(List<ScanResult> results) {
                 super.onBatchScanResults(results);
                 Log.d(ETIQUETA_LOG, "  buscarEsteDispositivoBTLE(): onBatchScanResults() ");
-
             }
 
             @Override
             public void onScanFailed(int errorCode) {
                 super.onScanFailed(errorCode);
                 Log.d(ETIQUETA_LOG, "  buscarEsteDispositivoBTLE(): onScanFailed() ");
-
             }
         };
 
+        // Filtro por nombre de dispositivo
         ScanFilter sf = new ScanFilter.Builder().setDeviceName( dispositivoBuscado ).build();
-
-
         List<ScanFilter> filtros = new java.util.ArrayList<>();
         filtros.add(sf);
 
@@ -190,17 +190,14 @@ public class MainActivity extends AppCompatActivity {
                         .setScanMode(android.bluetooth.le.ScanSettings.SCAN_MODE_LOW_LATENCY)
                         .build();
 
-
         Log.d(ETIQUETA_LOG, "  buscarEsteDispositivoBTLE(): empezamos a escanear buscando: " + dispositivoBuscado );
 
         this.elEscanner.startScan(filtros, settings, this.callbackDelEscaneo );
     } // ()
 
-    // --------------------------------------------------------------
-    // --------------------------------------------------------------
-
-
-
+    // ------------------------------------------------------------------
+    // Detiene el escaneo de dispositivos BLE
+    // ------------------------------------------------------------------
     private void detenerBusquedaDispositivosBTLE() {
 
         if ( this.callbackDelEscaneo == null ) {
@@ -212,7 +209,10 @@ public class MainActivity extends AppCompatActivity {
 
     } // ()
 
-
+    // ------------------------------------------------------------------
+    // Procesa la trama recibida y envía la medición al backend si es nueva
+    // Evita duplicados usando el contador y banderas
+    // ------------------------------------------------------------------
     private void guardarMedicion( ScanResult resultado ){
 
         CompletableFuture.runAsync(() -> {
@@ -224,7 +224,7 @@ public class MainActivity extends AppCompatActivity {
             int contadorArduino = major[1] & 0xFF;
             int valorMedicion = Utilidades.bytesToInt(tib.getMinor());
 
-            // Si es un nuevo contador
+            // Si es un nuevo contador, reinicia banderas
             if (contadorArduino != this.contadorAndroid) {
                 Log.d("ETIQUETA_LOG", "Nuevo contador, se reinician banderas");
                 this.contadorAndroid = contadorArduino;
@@ -232,7 +232,7 @@ public class MainActivity extends AppCompatActivity {
                 this.recibioTemperatura = false;
             }
 
-            // Verificamos qué tipo de medición llegó
+            // Verificamos qué tipo de medición llegó y si ya se envió
             if (tipoMedicion == 11 && !recibioGas) {
                 this.recibioGas = true;
                 Log.d("ETIQUETA_LOG", "Enviando medición tipo: " + tipoMedicion + " (contador " + contadorArduino + ")");
@@ -252,34 +252,27 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    // --------------------------------------------------------------
-    // --------------------------------------------------------------
+    // ------------------------------------------------------------------
+    // Métodos que se vinculan a los botones de la interfaz
+    // ------------------------------------------------------------------
     public void botonBuscarDispositivosBTLEPulsado( View v ) {
         Log.d(ETIQUETA_LOG, " boton buscar dispositivos BTLE Pulsado" );
         this.buscarTodosLosDispositivosBTLE();
     } // ()
 
-    // --------------------------------------------------------------
-    // --------------------------------------------------------------
     public void botonBuscarNuestroDispositivoBTLEPulsado( View v ) {
         Log.d(ETIQUETA_LOG, " boton nuestro dispositivo BTLE Pulsado" );
-        //this.buscarEsteDispositivoBTLE( Utilidades.stringToUUID( "EPSG-GTI-PROY-3A" ) );
-
-        //this.buscarEsteDispositivoBTLE( "EPSG-GTI-PROY-3A" );
-        //this.buscarEsteDispositivoBTLE( "EPSG-GTI-PROY-3A" );
         this.buscarEsteDispositivoBTLE( "GTI");
-
     } // ()
 
-    // --------------------------------------------------------------
-    // --------------------------------------------------------------
     public void botonDetenerBusquedaDispositivosBTLEPulsado( View v ) {
         Log.d(ETIQUETA_LOG, " boton detener busqueda dispositivos BTLE Pulsado" );
         this.detenerBusquedaDispositivosBTLE();
     } // ()
 
-    // --------------------------------------------------------------
-    // --------------------------------------------------------------
+    // ------------------------------------------------------------------
+    // Inicializa el adaptador Bluetooth y solicita permisos si es necesario
+    // ------------------------------------------------------------------
     private void inicializarBlueTooth() {
         Log.d(ETIQUETA_LOG, " inicializarBlueTooth(): obtenemos adaptador BT ");
 
@@ -297,20 +290,18 @@ public class MainActivity extends AppCompatActivity {
         }
 
         Log.d(ETIQUETA_LOG, " inicializarBlueTooth(): habilitado =  " + bta.isEnabled() );
-
         Log.d(ETIQUETA_LOG, " inicializarBlueTooth(): estado =  " + bta.getState() );
-
         Log.d(ETIQUETA_LOG, " inicializarBlueTooth(): obtenemos escaner btle ");
 
         this.elEscanner = bta.getBluetoothLeScanner();
 
         if ( this.elEscanner == null ) {
             Log.d(ETIQUETA_LOG, " inicializarBlueTooth(): Socorro: NO hemos obtenido escaner btle  !!!!");
-
         }
 
         Log.d(ETIQUETA_LOG, " inicializarBlueTooth(): voy a perdir permisos (si no los tuviera) !!!!");
 
+        // Solicita permisos necesarios para Bluetooth y localización
         if (
                 ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED
                         || ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED
@@ -330,13 +321,12 @@ public class MainActivity extends AppCompatActivity {
         }
         else {
             Log.d(ETIQUETA_LOG, " inicializarBlueTooth(): parece que YA tengo los permisos necesarios !!!!");
-
         }
     } // ()
 
-
-    // --------------------------------------------------------------
-    // --------------------------------------------------------------
+    // ------------------------------------------------------------------
+    // Método principal de ciclo de vida: inicializa la actividad y Bluetooth
+    // ------------------------------------------------------------------
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -350,15 +340,16 @@ public class MainActivity extends AppCompatActivity {
 
     } // onCreate()
 
-    // --------------------------------------------------------------
-    // --------------------------------------------------------------
+    // ------------------------------------------------------------------
+    // Callback para el resultado de la petición de permisos
+    // ------------------------------------------------------------------
     public void onRequestPermissionsResult(int requestCode, String[] permissions,
                                            int[] grantResults) {
         super.onRequestPermissionsResult( requestCode, permissions, grantResults);
 
         switch (requestCode) {
             case CODIGO_PETICION_PERMISOS:
-                // If request is cancelled, the result arrays are empty.
+                // Si se conceden los permisos, se puede continuar con la funcionalidad BLE
                 if (grantResults.length > 0 &&
                         grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
@@ -372,8 +363,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 return;
         }
-        // Other 'case' lines to check for other
-        // permissions this app might request.
+        // Otros casos de permisos pueden añadirse aquí si la app lo requiere
     } // ()
 
 } // class
