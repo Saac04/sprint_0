@@ -7,8 +7,6 @@
 class LogicaDeNegocio {
     
     constructor() {
-        // Crear instancia del peticionario REST
-        this.peticionario = new PeticionarioREST();
         console.log('[LogicaDeNegocio] Inicializada');
     }
 
@@ -18,19 +16,28 @@ class LogicaDeNegocio {
     // ------------------------------------------------------------------------
     async getMedicion() {
         console.log('[LogicaDeNegocio] getMedicion() - Iniciando consulta...');
+		const url = 'https://sagucre.upv.edu.es/api/medicion'
 
         try {
             // Hacer petición al backend mediante el peticionario
-            const respuesta = await this.peticionario.obtenerUltimaMedicion();
+			const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            });
+
+			// Leer el cuerpo de la respuesta
+            const datos = await response.json();
 
             // Verificar si la petición fue exitosa
-            if (!respuesta.success) {
-                console.error('[LogicaDeNegocio] Error en respuesta:', respuesta.error);
-                throw new Error(respuesta.error || 'Error desconocido al obtener medición');
+            if (!response.ok) {
+                throw new Error(datos.error || `Error HTTP: ${response.status}`);
             }
 
             // Extraer los datos de la medición
-            const medicion = respuesta.datos.data;
+            const medicion = datos.data;
 
             // Validar que vengan los datos esperados
             if (!medicion) {
