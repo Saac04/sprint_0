@@ -22,6 +22,7 @@ import androidx.core.content.ContextCompat;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 // ------------------------------------------------------------------
 // ------------------------------------------------------------------
@@ -41,7 +42,8 @@ public class MainActivity extends AppCompatActivity {
     private ScanCallback callbackDelEscaneo = null;
 
     private int contadorAndroid = 0;
-    private int numeroDeTipoMedidaAndroid = 0;
+    private boolean recibioGas = false;
+    private boolean recibioTemperatura = false;
 
     // --------------------------------------------------------------
     // --------------------------------------------------------------
@@ -190,7 +192,6 @@ public class MainActivity extends AppCompatActivity {
 
 
         Log.d(ETIQUETA_LOG, "  buscarEsteDispositivoBTLE(): empezamos a escanear buscando: " + dispositivoBuscado );
-        // Log.d(ETIQUETA_LOG, "  buscarEsteDispositivoBTLE(): empezamos a escanear buscando: " + dispositivoBuscado + " -> " + Utilidades.stringToUUID( dispositivoBuscado ) );
 
         this.elEscanner.startScan(filtros, settings, this.callbackDelEscaneo );
     } // ()
@@ -198,61 +199,7 @@ public class MainActivity extends AppCompatActivity {
     // --------------------------------------------------------------
     // --------------------------------------------------------------
 
-    // --------------------------------------------------------------
-    // --------------------------------------------------------------
-    private void buscarEsteDispositivoUuid(final String dispositivoBuscado) {
-        Log.d(ETIQUETA_LOG, " buscarEsteDispositivoUuid(): empieza ");
 
-        Log.d(ETIQUETA_LOG, "  buscarEsteDispositivoUuid(): instalamos scan callback ");
-
-
-        // super.onScanResult(ScanSettings.SCAN_MODE_LOW_LATENCY, result); para ahorro de energía
-
-        this.callbackDelEscaneo = new ScanCallback() {
-            @Override
-            public void onScanResult( int callbackType, ScanResult resultado ) {
-                super.onScanResult(callbackType, resultado);
-                Log.d(ETIQUETA_LOG, "  buscarEsteDispositivoUuid(): onScanResult() ");
-
-                mostrarInformacionDispositivoBTLE( resultado );
-                guardarMedicion( resultado );
-            }
-
-            @Override
-            public void onBatchScanResults(List<ScanResult> results) {
-                super.onBatchScanResults(results);
-                Log.d(ETIQUETA_LOG, "  buscarEsteDispositivoUuid(): onBatchScanResults() ");
-
-            }
-
-            @Override
-            public void onScanFailed(int errorCode) {
-                super.onScanFailed(errorCode);
-                Log.d(ETIQUETA_LOG, "  buscarEsteDispositivoUuid(): onScanFailed() ");
-
-            }
-        };
-
-        ScanFilter sf = new ScanFilter.Builder().setServiceUuid(new ParcelUuid(Utilidades.stringToUUID(dispositivoBuscado))).build();
-
-        List<ScanFilter> filtros = new java.util.ArrayList<>();
-        filtros.add(sf);
-
-        // Configuración de escaneo (modo rápido, baja latencia)
-        android.bluetooth.le.ScanSettings settings =
-                new android.bluetooth.le.ScanSettings.Builder()
-                        .setScanMode(android.bluetooth.le.ScanSettings.SCAN_MODE_LOW_LATENCY)
-                        .build();
-
-
-        Log.d(ETIQUETA_LOG, "  buscarEsteDispositivoUuid(): empezamos a escanear buscando: " + dispositivoBuscado );
-        // Log.d(ETIQUETA_LOG, "  buscarEsteDispositivoBTLE(): empezamos a escanear buscando: " + dispositivoBuscado + " -> " + Utilidades.stringToUUID( dispositivoBuscado ) );
-
-        this.elEscanner.startScan(filtros, settings, this.callbackDelEscaneo );
-    } // ()
-
-    // --------------------------------------------------------------
-    // --------------------------------------------------------------
 
     private void detenerBusquedaDispositivosBTLE() {
 
@@ -266,49 +213,43 @@ public class MainActivity extends AppCompatActivity {
     } // ()
 
 
-    private void guardarMedicion( ScanResult resultado){
+    private void guardarMedicion( ScanResult resultado ){
 
-        byte[] bytes = resultado.getScanRecord().getBytes();
-        TramaIBeacon tib = new TramaIBeacon(bytes);
+        CompletableFuture.runAsync(() -> {
+            byte[] bytes = resultado.getScanRecord().getBytes();
+            TramaIBeacon tib = new TramaIBeacon(bytes);
 
-        //esta es la mejor amnera que logré separar el el tipo de medicion con el contador.
-        byte[] major = tib.getMajor();
-        int tipoMedicion = major[0] & 0xFF ;
-        int contadorArduino = major[1] & 0xFF;
+            byte[] major = tib.getMajor();
+            int tipoMedicion = major[0] & 0xFF;
+            int contadorArduino = major[1] & 0xFF;
+            int valorMedicion = Utilidades.bytesToInt(tib.getMinor());
 
-        int valorMedicion = Utilidades.bytesToInt(tib.getMinor());
+            // Si es un nuevo contador
+            if (contadorArduino != this.contadorAndroid) {
+                Log.d("ETIQUETA_LOG", "Nuevo contador, se reinician banderas");
+                this.contadorAndroid = contadorArduino;
+                this.recibioGas = false;
+                this.recibioTemperatura = false;
+            }
 
-        //tiene que ser dos porque se esperan 2 tipos de medida que son gas y temperatura
-        //tambien puedo crear una variable para este numero en especifico, pero se queda asi por ser el sprint 0
+            // Verificamos qué tipo de medición llegó
+            if (tipoMedicion == 11 && !recibioGas) {
+                this.recibioGas = true;
+                Log.d("ETIQUETA_LOG", "Enviando medición tipo: " + tipoMedicion + " (contador " + contadorArduino + ")");
+                Logica logica = new Logica(tipoMedicion, valorMedicion);
+                logica.guardarMedcion();
+            }
+            else if (tipoMedicion == 12 && !recibioTemperatura) {
+                this.recibioTemperatura = true;
+                Log.d("ETIQUETA_LOG", "Enviando medición tipo: " + tipoMedicion + " (contador " + contadorArduino + ")");
+                Logica logica = new Logica(tipoMedicion, valorMedicion);
+                logica.guardarMedcion();
+            }
+            else {
+                Log.d("ETIQUETA_LOG", "Medición duplicada ignorada (tipo=" + tipoMedicion + ", contador=" + contadorArduino + ")");
+            }
 
-        if ( this.numeroDeTipoMedidaAndroid == 2 ) {
-            Log.d(ETIQUETA_LOG, "Se enviaron todas las medidas");
-            return;
-        } else if ( contadorArduino == this.contadorAndroid ) {
-            Log.d(ETIQUETA_LOG, "Se repitio el contador no se envia este becon");
-            return;
-        } else {
-
-            /*  En el momemento que el contador sea diferente, es decir, un nuevo beacon con datos diferente
-                resetamos el numero de tipo de medicion a 0 para los casos de que:
-
-                (1) En caso de que sea una nueva medicion
-                (2) En caso de que no se obtenga alguna medicion, o solo se obtenga una
-
-                 Asi me aseguro de que no ocurra ningun fallo*/
-
-            this.numeroDeTipoMedidaAndroid = 0;
-        }
-
-        this.contadorAndroid = contadorArduino;
-        this.numeroDeTipoMedidaAndroid = this.numeroDeTipoMedidaAndroid + 1;
-
-        Log.d("CACA", "SE ENVIA EXISTOSAMENTE LA TRAMA DE: " + tipoMedicion);
-        Log.d("CACA", "CON CONTADOR: " + contadorArduino);
-
-        Logica logica = new Logica(tipoMedicion, valorMedicion);
-
-        logica.guardarMedcion();
+        });
     }
 
     // --------------------------------------------------------------
@@ -326,8 +267,7 @@ public class MainActivity extends AppCompatActivity {
 
         //this.buscarEsteDispositivoBTLE( "EPSG-GTI-PROY-3A" );
         //this.buscarEsteDispositivoBTLE( "EPSG-GTI-PROY-3A" );
-        //this.buscarEsteDispositivoBTLE( "GTI");
-        this.buscarEsteDispositivoUuid("0000000000000000");
+        this.buscarEsteDispositivoBTLE( "GTI");
 
     } // ()
 
